@@ -1,53 +1,21 @@
-#!/usr/bin/env python3 
-from PIL import Image as Img
+'''loaded a gif file for balls to see something moving, and call the balls back to a family path'''
+import tkinter as tk
 import os
-#os.chdir(r'\Users\tjj\Desktop\unhas')
-cuadro = Img.new('RGB', (300,300))
-pinta = cuadro.load()
+import random
+os.chdir(r'../files')
+
 class Board(object):
-	'''All objects in play'''
-	fams = [[(71,1), (74,3), (76,7), (79,4), (72,4), (78,6), (73,10), (75,9), (73,5)], [(11,1), (11,3), (11,5), (12,2), (12,4), (12,6), (13,1), (13,3), (13,5)], [(51,1), (51,3), (51,5), (52,2), (52,4), (52,6), (53,1), (53,3), (53,5)]]
-	works = [(29,99), (20,73), (30,65), (20,82), (30,74), (40,66), (1,81), (50,73), (40,65),(10,81), (20,73), (30,65), (20,82), (30,74), (40,66), (1,81), (50,73), (40,65)]
-	suerte = [(0,0), (99,99), (22,22), (0,44), (88,22), (77,99), (11,66), (44,11), (99,44), (30,65), (73,3), (12,2), (51,3), (66,11)]
+	nbols = 101
+	
 	bolas = []
 	time = 0
-	tempxy = []
-	res = []
-	def __init__(self):
-		self,board = (300,300)
-	def famPos(self):
-		''' generator returns 1 position of fam each time'''
-		multifam = 250 * self.fams[self.fam]
-		it = 0
-		while it<2400:
-			yield multifam[it]
-			it += 1
-
-	def workPos(self):
-		''' generator returns 1 position of work each time'''
-		multiwork = 250 * self.works
-		it = 0
-		while it<2400:
-			yield multiwork[it]
-			it += 1
-
-	def ranPos(self):
-		''' generator returns 1 position of rand each time'''
-		it = 0
-		randlist = self.suerte * 10
-		multirand = 250 * randlist
-		while it<2400:
-			yield multirand[it]
-			it += 1
+		
 	def boardMove():
-
-		print(' \n ', Board.time)
-
+		Board.time += 1
+		if Board.time > 10000:
+			Board.time = 0
 		for item in Board.bolas:
-			Board.time += 1
-			item.pintame()
 			item.bolMove()
-			Board.res.append(item.xy)
 
 class Bola(Board):
 	def __init__(self, fam, xy):
@@ -55,16 +23,33 @@ class Bola(Board):
 		self.xy = xy
 		self.fam = fam
 		self.pos = 0
-		self.wgen = Board.workPos(self)
-		self.hgen = Board.famPos(self)
-		self.rgen = Board.ranPos(self)
 		self.path = self.mkPath()
-		self.xy = self.path[self.pos]
-		self.pos += 1
-		self.bolas.append(self)	
-
+		self.bolas.append(self)
+	
+	def crFams(nbols):
+		fam1, fam2, fam3, fam4 = [],[],[],[]
+		k = 0
+		for b in range(int(nbols/4)):
+			fam1 +=[(int(20 + random.random()*20), int(20 + random.random()*20))]
+			exec(f'bola{k} = Bola(0, fam1[-1])')
+			k+=1
+		for b in range(int(nbols/4)):
+			fam2 += [(int(760 + random.random()*20), int(760 + random.random()*20))]
+			exec(f'bola{k} = Bola(1,  fam2[-1])')
+			k+=1
+		for b in range(int(nbols/4)):
+			fam3 += [(int(20 + random.random()*20), int(760 + random.random()*20))]
+			exec(f'bola{k} = Bola(2,  fam3[-1])')
+			k+=1
+		for b in range(int(nbols/4)):
+			fam4 += [(int(760 + random.random()*20), int(20 + random.random()*20))]
+			exec(f'bola{k} = Bola(3,  fam4[-1])')
+			k+=1
+		return [fam1, fam2, fam3, fam4]
+	
 	def bolMove(self):
-		if self.pos == 119:
+		''' update bol.xy and bol.path when it runs to the last pos'''
+		if self.pos == 248:
 			self.pos = 1
 			self.path = self.mkPath()
 		else:
@@ -72,34 +57,63 @@ class Bola(Board):
 		self.xy = self.path[self.pos]
 		return
 	def mkPath(self):
+		'''after some time make path to fam cords'''
 		if self.pos == 0:
-			return list(Bola.intermediates(self.xy, next(self.wgen)))
-		self.pos = 0
-		if self.time > 2000:
-			return list(Bola.intermediates(self.xy, next(self.hgen)))
+			print(self.xy)
+			return list(self.intermediates(self.xy, (int(random.random()*800), int(random.random()*800))))
+		if self.time > 1080:
+			return list(self.intermediates(self.xy, tuple(random.choice(Board.fams[1]))))
 		else:
-			if self.xy not in self.works:
-				return list(Bola.intermediates(self.xy, next(self.wgen)))
-			else:
-				return list(Bola.intermediates(self.xy, next(self.rgen)))
-	def pintame(self):
-		pinta[tuple(self.xy)] = (255,0,0)
-
-	def intermediates(p1, p2, nb_points=120):
+			return list(self.intermediates(self.xy,(int(random.random()*800), int(random.random()*800))))
+	
+	def intermediates(self, p1, p2, nb_points=250):
 		""""Return a list of nb_points equally spaced points
 		between p1 and p2"""
 		# If we have 8 intermediate points, we have 8+1=9 spaces
 		# between p1 and p2
 		x_spacing = (p2[0] - p1[0]) / (nb_points + 1)
 		y_spacing = (p2[1] - p1[1]) / (nb_points + 1)
-
-		return [[int(p1[0] + i * x_spacing), int(p1[1] +  i * y_spacing)] 
+	
+		return [[int(p1[0] + i * x_spacing), int(p1[1] + i * y_spacing)]
 				for i in range(1, nb_points+1)]
+Board.fams = Bola.crFams(Board.nbols)
+	
+# Create the window with the Tk class
+root = tk.Tk()
+# Create the canvas and make it visible with pack()
+canvas = tk.Canvas(root, width=800, height=800)
+canvas.pack() # this makes it visible
+# Loads and create image (put the image in the folder)
+azulgif = tk.PhotoImage(file="azul.gif")
+rojogif = tk.PhotoImage(file="rojo.gif")
+amagif = tk.PhotoImage(file="amarillo.gif")
+# outrashow = canvas.create_image(550, 550, anchor=tk.NW, image=rojogif)
+# azulshow = canvas.create_image(150, 150, anchor=tk.NW, image=azulgif)
+# azul = Bola(0, (150,150))
+# outra = Bola(1, (550,550))
+imgbolas = []
+for k in range(100):
+	item = Board.bolas[k]
+	#imgbolas.append(exec(f'imgbola{k} = 0'))    # = canvas.create_image(i, 50, anchor=tk.NW, image=amagif)'))
+	exec(f'imgbola{k} = canvas.create_image(item.xy[0], item.xy[1], anchor=tk.NW, image=rojogif)')
+	print(k)
 
-Bola(0, (16,16))
-Bola(1, (69,69))
-for i in range(5200):
+# def move(event):
+# 	'''Move the sprite image with a d w and s when click them'''
+# 	Board.boardMove()
+# 	canvas.moveto(azulshow, azul.xy[0], azul.xy[1])
+# 	canvas.moveto(outrashow, outra.xy[0], outra.xy[1])
+# This bind window to keys so that move is called when you press a key
+# root.bind("<Key>", move)
+while True:
 	Board.boardMove()
-print (Board.res)
-cuadro.show()
-
+	# canvas.moveto(azulshow, azul.xy[0], azul.xy[1])
+	# canvas.moveto(outrashow, outra.xy[0], outra.xy[1])
+	for k in range(100):
+		item = Board.bolas[k]
+		exec(f'canvas.moveto(imgbola{k}, item.xy[0], item.xy[1])')
+	
+	root.update_idletasks()
+	root.update()
+	# this creates the loop that makes the window stay 'active'
+#root.mainloop()
